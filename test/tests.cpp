@@ -500,3 +500,75 @@ TEST_CASE("lowpassToHighpass - basic test", "[lowpassToHighpass]")
     requireApproxEqual(poles, expectedPoles);
     REQUIRE(result.getGain() == Catch::Approx(8.5));
 }
+
+TEST_CASE("lowpassToBandpass - basic test", "[lowpassToBandpass]")
+{
+    // >>> from scipy.signal import lp2bp_zpk
+    // >>> z   = [ 5 + 2j ,  5 - 2j ]
+    // >>> p   = [ 7      ,  -16    ]
+    // >>> k   = 0.8
+    // >>> wo  = 0.62
+    // >>> bw  = 15
+    // >>> lp2bp_zpk(z, p, k, wo, bw)
+    const auto input = Zpk(
+        { { 5.0, 2.0 }, { 5.0, -2.0 } },
+        { 7, -16 },
+        0.8);
+    const auto result = lowpassToBandpass(input, 0.62, 15);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { 74.9955814925219, 30.00176761126334 },
+        { 74.9955814925219, -30.00176761126334 },
+        { 0.004418507478114009, 0.001767611263341351 },
+        { 0.004418507478114009, -0.001767611263341351 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 104.9963389199666 },
+        { -0.0016016773557083752 },
+        { 0.003661080033396047 },
+        { -239.99839832264428 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(0.8));
+}
+
+TEST_CASE("lowpassToBandstop - basic test", "[lowpassToBandstop]")
+{
+    // >>> from scipy.signal import lp2bs_zpk
+    // >>> z   = [             ]
+    // >>> p   = [ 0.7 ,    -1 ]
+    // >>> k   = 9
+    // >>> wo  = 0.5
+    // >>> bw  = 10
+    // >>> lp2bs_zpk(z, p, k, wo, bw)
+    const auto input = Zpk(
+        {},
+        { 0.7, -1 },
+        9);
+    const auto result = lowpassToBandstop(input, 0.5, 10);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { 0.0, 0.5 },
+        { 0.0, 0.5 },
+        { 0.0, -0.5 },
+        { 0.0, -0.5 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 14.268192795531009 },
+        { -0.025062814466900285 },
+        { 0.01752149018327742 },
+        { -9.9749371855331 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(-12.857142857142858));
+}
