@@ -225,6 +225,17 @@ Zpk besselPrototype(int filterOrder);
  */
 Zpk lowpassToLowpass(const Zpk& zpk, double wc);
 
+/**
+ * Transforms a lowpass filter in Zero-Pole-Gain (Zpk) form to a highpass filter.
+ *
+ * Equivalent to the SciPy `lp2hp_zpk` function.
+ *
+ * @param zpk A reference to a Zpk object representing the lowpass filter to be transformed.
+ * @param wc The desired cutoff frequency (rad/s) for the resulting highpass filter.
+ * @return A Zpk object representing the transformed highpass filter.
+ */
+Zpk lowpassToHighpass(const Zpk& zpk, double wc);
+
 } // namespace iirfilters
 
 #endif

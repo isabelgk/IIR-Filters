@@ -459,4 +459,51 @@ Zpk lowpassToLowpass(const Zpk& zpk, double wc)
     return Zpk(zeros, poles, k);
 }
 
+Zpk lowpassToHighpass(const Zpk& zpk, double wc)
+{
+    // https://github.com/scipy/scipy/blob/b1296b9b4393e251511fe8fdd3e58c22a1124899/scipy/signal/_filter_design.py#L3067
+
+    auto zeros = zpk.getZeros();
+    auto poles = zpk.getPoles();
+    const auto gain = zpk.getGain();
+
+    const int degree = poles.size() - zeros.size();
+    if (degree < 0) {
+        // Improper transfer function
+        return {};
+    }
+
+    // Calculate gain first
+    // Cancel out gain change caused by inversion
+    // k_hp = k * real(prod(-z) / prod(-p))
+    std::complex<double> zerosProd(1.0, 0.0);
+    for (const auto& z : zeros) {
+        zerosProd *= -z;
+    }
+
+    std::complex<double> polesProd(1.0, 0.0);
+    for (const auto& p : poles) {
+        polesProd *= -p;
+    }
+    std::complex<double> ratio = zerosProd / polesProd;
+    // Invert positions radially about unit circle to convert LPF to HPF
+    // Scale all points radially from origin to shift cutoff frequency
+    for (auto& z : zeros) {
+        z = wc / z;
+    }
+
+    for (auto& p : poles) {
+        p = wc / p;
+    }
+
+    // If lowpass had zeros at infinity, inverting moves them to origin.
+    if (degree > 0) {
+        for (int i = 0; i < degree; ++i) {
+            zeros.push_back(std::complex<double>(0, 0));
+        }
+    }
+
+    return Zpk(zeros, poles, gain * ratio.real());
+}
+
 } // namespace iirfilters

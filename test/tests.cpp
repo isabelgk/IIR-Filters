@@ -469,3 +469,34 @@ TEST_CASE("lowpassToLowpass - basic test", "[lowpassToLowpass]")
     requireApproxEqual(poles, expectedPoles);
     REQUIRE(result.getGain() == Catch::Approx(0.8));
 }
+
+TEST_CASE("lowpassToHighpass - basic test", "[lowpassToHighpass]")
+{
+    // >>> from scipy.signal import lp2hp_zpk
+    // >>> z   = [ -2 + 3j ,  -0.5 - 0.8j ]
+    // >>> p   = [ -1      ,  -4          ]
+    // >>> k   = 10
+    // >>> wo  = 0.6
+    // >>> lp2hp_zpk(z, p, k, wo)
+    const auto input = Zpk(
+        { { -2, 3 }, { -0.5, -0.8 } },
+        { -1, -4 },
+        10);
+    const auto result = lowpassToHighpass(input, 0.6);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { -0.0923076923076923, -0.13846153846153847 },
+        { -0.33707865168539325, 0.5393258426966292 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { -0.6 },
+        { -0.15 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(8.5));
+}
