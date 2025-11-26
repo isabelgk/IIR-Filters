@@ -213,6 +213,18 @@ Zpk ellipticPrototype(size_t filterOrder, double rp, double rs);
  */
 Zpk besselPrototype(int filterOrder);
 
+/**
+ * Transforms a lowpass filter in Zero-Pole-Gain (Zpk) form to another lowpass filter
+ * with a different cutoff frequency.
+ *
+ * Equivalent to the SciPy `lp2lp_zpk` function.
+ *
+ * @param zpk A reference to a Zpk object representing the original lowpass filter.
+ * @param wc The desired cutoff frequency (rad/s) for the resulting lowpass filter.
+ * @return A Zpk object representing the transformed lowpass filter with the specified cutoff frequency.
+ */
+Zpk lowpassToLowpass(const Zpk& zpk, double wc);
+
 } // namespace iirfilters
 
 #endif

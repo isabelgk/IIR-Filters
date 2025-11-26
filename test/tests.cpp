@@ -441,3 +441,31 @@ TEST_CASE("besselPrototype - Seventh Order", "[besselPrototype]")
     };
     requireApproxEqual(poles, expectedPoles);
 }
+
+TEST_CASE("lowpassToLowpass - basic test", "[lowpassToLowpass]")
+{
+    // >>> from scipy.signal import lp2lp_zpk
+    // >>> z = [ 7, 2 ]
+    // >>> p = [ 5, 13 ]
+    // >>> k = 0.8
+    // >>> wo = 0.4
+    // >>> lp2lp_zpk(z, p, k, wo)
+    const auto input = Zpk({ 7, 2 }, { 5, 13 }, 0.8);
+    const auto result = lowpassToLowpass(input, 0.4);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { 2.8 },
+        { 0.8 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 2.0 },
+        { 5.2 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(0.8));
+}

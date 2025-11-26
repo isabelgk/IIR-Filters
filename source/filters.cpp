@@ -431,4 +431,32 @@ Zpk besselPrototype(int filterOrder)
     return Zpk(zeros, poles, gain);
 }
 
+Zpk lowpassToLowpass(const Zpk& zpk, double wc)
+{
+    auto zeros = zpk.getZeros();
+    auto poles = zpk.getPoles();
+    const auto gain = zpk.getGain();
+
+    const int degree = poles.size() - zeros.size();
+    if (degree < 0) {
+        // Improper transfer function
+        return {};
+    }
+
+    // Scale all points radially from origin to shift cutoff frequency
+    for (auto& z : zeros) {
+        z *= wc;
+    }
+
+    for (auto& p : poles) {
+        p *= wc;
+    }
+
+    // Each shifted pole decreases gain by wc, each shifted zero increases it.
+    // Cancel out the net change to keep overall gain the same
+    const double k = gain * std::pow(wc, degree);
+
+    return Zpk(zeros, poles, k);
+}
+
 } // namespace iirfilters
