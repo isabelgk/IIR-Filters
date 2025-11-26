@@ -441,3 +441,134 @@ TEST_CASE("besselPrototype - Seventh Order", "[besselPrototype]")
     };
     requireApproxEqual(poles, expectedPoles);
 }
+
+TEST_CASE("lowpassToLowpass - basic test", "[lowpassToLowpass]")
+{
+    // >>> from scipy.signal import lp2lp_zpk
+    // >>> z = [ 7, 2 ]
+    // >>> p = [ 5, 13 ]
+    // >>> k = 0.8
+    // >>> wo = 0.4
+    // >>> lp2lp_zpk(z, p, k, wo)
+    const auto input = Zpk({ 7, 2 }, { 5, 13 }, 0.8);
+    const auto result = lowpassToLowpass(input, 0.4);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { 2.8 },
+        { 0.8 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 2.0 },
+        { 5.2 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(0.8));
+}
+
+TEST_CASE("lowpassToHighpass - basic test", "[lowpassToHighpass]")
+{
+    // >>> from scipy.signal import lp2hp_zpk
+    // >>> z   = [ -2 + 3j ,  -0.5 - 0.8j ]
+    // >>> p   = [ -1      ,  -4          ]
+    // >>> k   = 10
+    // >>> wo  = 0.6
+    // >>> lp2hp_zpk(z, p, k, wo)
+    const auto input = Zpk(
+        { { -2, 3 }, { -0.5, -0.8 } },
+        { -1, -4 },
+        10);
+    const auto result = lowpassToHighpass(input, 0.6);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { -0.0923076923076923, -0.13846153846153847 },
+        { -0.33707865168539325, 0.5393258426966292 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { -0.6 },
+        { -0.15 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(8.5));
+}
+
+TEST_CASE("lowpassToBandpass - basic test", "[lowpassToBandpass]")
+{
+    // >>> from scipy.signal import lp2bp_zpk
+    // >>> z   = [ 5 + 2j ,  5 - 2j ]
+    // >>> p   = [ 7      ,  -16    ]
+    // >>> k   = 0.8
+    // >>> wo  = 0.62
+    // >>> bw  = 15
+    // >>> lp2bp_zpk(z, p, k, wo, bw)
+    const auto input = Zpk(
+        { { 5.0, 2.0 }, { 5.0, -2.0 } },
+        { 7, -16 },
+        0.8);
+    const auto result = lowpassToBandpass(input, 0.62, 15);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { 74.9955814925219, 30.00176761126334 },
+        { 74.9955814925219, -30.00176761126334 },
+        { 0.004418507478114009, 0.001767611263341351 },
+        { 0.004418507478114009, -0.001767611263341351 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 104.9963389199666 },
+        { -0.0016016773557083752 },
+        { 0.003661080033396047 },
+        { -239.99839832264428 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(0.8));
+}
+
+TEST_CASE("lowpassToBandstop - basic test", "[lowpassToBandstop]")
+{
+    // >>> from scipy.signal import lp2bs_zpk
+    // >>> z   = [             ]
+    // >>> p   = [ 0.7 ,    -1 ]
+    // >>> k   = 9
+    // >>> wo  = 0.5
+    // >>> bw  = 10
+    // >>> lp2bs_zpk(z, p, k, wo, bw)
+    const auto input = Zpk(
+        {},
+        { 0.7, -1 },
+        9);
+    const auto result = lowpassToBandstop(input, 0.5, 10);
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { 0.0, 0.5 },
+        { 0.0, 0.5 },
+        { 0.0, -0.5 },
+        { 0.0, -0.5 },
+    };
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 14.268192795531009 },
+        { -0.025062814466900285 },
+        { 0.01752149018327742 },
+        { -9.9749371855331 },
+    };
+
+    requireApproxEqual(zeros, expectedZeros);
+    requireApproxEqual(poles, expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(-12.857142857142858));
+}

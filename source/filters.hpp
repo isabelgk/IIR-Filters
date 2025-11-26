@@ -213,6 +213,53 @@ Zpk ellipticPrototype(size_t filterOrder, double rp, double rs);
  */
 Zpk besselPrototype(int filterOrder);
 
+/**
+ * Transforms a lowpass filter in Zero-Pole-Gain (Zpk) form to another lowpass filter
+ * with a different cutoff frequency.
+ *
+ * Equivalent to the SciPy `lp2lp_zpk` function.
+ *
+ * @param zpk A reference to a Zpk object representing the original lowpass filter.
+ * @param wc The desired cutoff frequency (rad/s) for the resulting lowpass filter.
+ * @return A Zpk object representing the transformed lowpass filter with the specified cutoff frequency.
+ */
+Zpk lowpassToLowpass(const Zpk& zpk, double wc);
+
+/**
+ * Transforms a lowpass filter in Zero-Pole-Gain (Zpk) form to a highpass filter.
+ *
+ * Equivalent to the SciPy `lp2hp_zpk` function.
+ *
+ * @param zpk A reference to a Zpk object representing the lowpass filter to be transformed.
+ * @param wc The desired cutoff frequency (rad/s) for the resulting highpass filter.
+ * @return A Zpk object representing the transformed highpass filter.
+ */
+Zpk lowpassToHighpass(const Zpk& zpk, double wc);
+
+/**
+ * Transforms a lowpass filter in Zero-Pole-Gain (Zpk) form to a bandpass filter.
+ *
+ * Equivalent to the SciPy `lp2bp_zpk` function.
+ *
+ * @param zpk A reference to a Zpk object representing the original lowpass filter.
+ * @param w0 The center frequency of the desired bandpass filter (rad/s).
+ * @param bw The bandwidth of the desired bandpass filter (rad/s).
+ * @return A Zpk object representing the transformed bandpass filter with the specified center frequency and bandwidth.
+ */
+Zpk lowpassToBandpass(const Zpk& zpk, double w0, double bw);
+
+/**
+ * Transforms a lowpass filter in Zero-Pole-Gain (Zpk) form to a bandstop filter.
+ *
+ * Equivalent to the SciPy `lp2bs_zpk` function.
+ *
+ * @param zpk A reference to a Zpk object representing the original lowpass filter.
+ * @param w0 The center frequency of the desired bandstop filter (rad/s).
+ * @param bw The bandwidth of the desired bandstop filter (rad/s).
+ * @return A Zpk object representing the transformed bandstop filter with the specified center frequency and bandwidth.
+ */
+Zpk lowpassToBandstop(const Zpk& zpk, double w0, double bw);
+
 } // namespace iirfilters
 
 #endif

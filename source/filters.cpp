@@ -431,4 +431,187 @@ Zpk besselPrototype(int filterOrder)
     return Zpk(zeros, poles, gain);
 }
 
+Zpk lowpassToLowpass(const Zpk& zpk, double wc)
+{
+    auto zeros = zpk.getZeros();
+    auto poles = zpk.getPoles();
+    const auto gain = zpk.getGain();
+
+    const int degree = poles.size() - zeros.size();
+    if (degree < 0) {
+        // Improper transfer function
+        return {};
+    }
+
+    // Scale all points radially from origin to shift cutoff frequency
+    for (auto& z : zeros) {
+        z *= wc;
+    }
+
+    for (auto& p : poles) {
+        p *= wc;
+    }
+
+    // Each shifted pole decreases gain by wc, each shifted zero increases it.
+    // Cancel out the net change to keep overall gain the same
+    const double k = gain * std::pow(wc, degree);
+
+    return Zpk(zeros, poles, k);
+}
+
+Zpk lowpassToHighpass(const Zpk& zpk, double wc)
+{
+    // https://github.com/scipy/scipy/blob/b1296b9b4393e251511fe8fdd3e58c22a1124899/scipy/signal/_filter_design.py#L3067
+
+    auto zeros = zpk.getZeros();
+    auto poles = zpk.getPoles();
+    const auto gain = zpk.getGain();
+
+    const int degree = poles.size() - zeros.size();
+    if (degree < 0) {
+        // Improper transfer function
+        return {};
+    }
+
+    // Calculate gain first
+    // Cancel out gain change caused by inversion
+    // k_hp = k * real(prod(-z) / prod(-p))
+    std::complex<double> zerosProd(1.0, 0.0);
+    for (const auto& z : zeros) {
+        zerosProd *= -z;
+    }
+
+    std::complex<double> polesProd(1.0, 0.0);
+    for (const auto& p : poles) {
+        polesProd *= -p;
+    }
+    std::complex<double> ratio = zerosProd / polesProd;
+    // Invert positions radially about unit circle to convert LPF to HPF
+    // Scale all points radially from origin to shift cutoff frequency
+    for (auto& z : zeros) {
+        z = wc / z;
+    }
+
+    for (auto& p : poles) {
+        p = wc / p;
+    }
+
+    // If lowpass had zeros at infinity, inverting moves them to origin.
+    if (degree > 0) {
+        for (int i = 0; i < degree; ++i) {
+            zeros.push_back(std::complex<double>(0, 0));
+        }
+    }
+
+    return Zpk(zeros, poles, gain * ratio.real());
+}
+
+Zpk lowpassToBandpass(const Zpk& zpk, double w0, double bw)
+{
+    // https://github.com/scipy/scipy/blob/b1296b9b4393e251511fe8fdd3e58c22a1124899/scipy/signal/_filter_design.py#L3152
+
+    const auto zeros = zpk.getZeros();
+    const auto poles = zpk.getPoles();
+    const double gain = zpk.getGain();
+
+    const int degree = static_cast<int>(poles.size()) - static_cast<int>(zeros.size());
+    if (degree < 0) {
+        // Improper transfer function
+        return {};
+    }
+
+    const double k = gain * std::pow(bw, degree);
+
+    std::vector<std::complex<double>> newZeros;
+    std::vector<std::complex<double>> newPoles;
+
+    // The same transform is done on the zeros and poles
+    auto transform = [&](const std::complex<double>& s) {
+        const auto term = s * (bw / 2.0);
+        const auto root = std::sqrt(term * term - w0 * w0);
+        return std::make_pair(term + root, term - root);
+    };
+
+    for (const auto& z : zeros) {
+        auto [fst, snd] = transform(z);
+        newZeros.push_back(fst);
+        newZeros.push_back(snd);
+    }
+
+    for (const auto& p : poles) {
+        auto [fst, snd] = transform(p);
+        newPoles.push_back(fst);
+        newPoles.push_back(snd);
+    }
+
+    // Move any zeros that were at infinity to the center of the stopband
+    for (int i = 0; i < degree; ++i) {
+        newZeros.push_back(std::complex<double>(0, 0));
+    }
+
+    return Zpk(newZeros, newPoles, k);
+}
+
+Zpk lowpassToBandstop(const Zpk& zpk, double w0, double bw)
+{
+https: // github.com/scipy/scipy/blob/b1296b9b4393e251511fe8fdd3e58c22a1124899/scipy/signal/_filter_design.py#L3253
+
+    const auto zeros = zpk.getZeros();
+    const auto poles = zpk.getPoles();
+    const auto gain = zpk.getGain();
+
+    const int degree = poles.size() - zeros.size();
+    if (degree < 0) {
+        // Improper transfer function
+        return {};
+    }
+
+    std::complex<double> prodZ(1.0, 0.0);
+    for (const auto& z : zeros) {
+        prodZ *= -z;
+    }
+
+    std::complex<double> prodP(1.0, 0.0);
+    for (const auto& p : poles) {
+        prodP *= -p;
+    }
+
+    double k = gain * (prodZ / prodP).real();
+
+    std::vector<std::complex<double>> newZeros;
+    std::vector<std::complex<double>> newPoles;
+
+    // The same transform is done on the zeros and poles
+    auto transform = [&](const std::complex<double>& s) {
+        // Scale to desired bandwidth
+        const auto s_hp = bw / 2.0 / s;
+        // Duplicate and shift both +w0 and -w0
+        const auto a = std::sqrt(s_hp * s_hp - w0 * w0);
+        return std::make_pair(s_hp + a, s_hp - a);
+    };
+
+    for (const auto& z : zeros) {
+        const auto [fst, snd] = transform(z);
+        newZeros.push_back(fst);
+        newZeros.push_back(snd);
+    }
+
+    for (const auto& p : poles) {
+        const auto [fst, snd] = transform(p);
+        newPoles.push_back(fst);
+        newPoles.push_back(snd);
+    }
+
+    // Move degree zeros to origin, leaving degree zeros at infinity for BPF
+    std::complex<double> center_pos(0, w0);
+    std::complex<double> center_neg(0, -w0);
+
+    for (int i = 0; i < degree; ++i) {
+        newZeros.push_back(center_pos);
+        newZeros.push_back(center_neg);
+    }
+
+    return Zpk(newZeros, newPoles, k);
+}
+
 } // namespace iirfilters
