@@ -36,7 +36,7 @@ Zpk::Zpk(const std::vector<std::complex<double>>& z, const std::vector<std::comp
 {
 }
 
-std::vector<BiquadCoefficients> Zpk::toSos()
+std::vector<BiquadCoefficients> Zpk::toSos() const
 {
     // Port of SciPy's zpk2sos with 'nearest' pairing algorithm
     // https://github.com/scipy/scipy/blob/v1.16.2/scipy/signal/_filter_design.py#L1475-L1795
@@ -109,7 +109,7 @@ std::vector<BiquadCoefficients> Zpk::toSos()
         // Select the next "worst" pole (closest to unit circle)
         const auto p1Idx = idxWorst(p);
         CDouble p1 = p[p1Idx];
-        p.erase(p.begin() + p1Idx);
+        p.erase(p.begin() + static_cast<long>(p1Idx));
 
         // Pair that pole with a zero
         CDouble p2, z1, z2;
@@ -127,7 +127,7 @@ std::vector<BiquadCoefficients> Zpk::toSos()
                 }
             }
             p2 = p[p2Idx];
-            p.erase(p.begin() + p2Idx);
+            p.erase(p.begin() + static_cast<long>(p2Idx));
         }
         else {
             p2 = std::conj(p1);
@@ -137,7 +137,7 @@ std::vector<BiquadCoefficients> Zpk::toSos()
         if (!z.empty()) {
             size_t z1Idx = nearestZeroIdx(z, p1);
             z1 = z[z1Idx];
-            z.erase(z.begin() + z1Idx);
+            z.erase(z.begin() + static_cast<long>(z1Idx));
 
             if (!math::isReal(z1)) {
                 // Complex zero
@@ -148,7 +148,7 @@ std::vector<BiquadCoefficients> Zpk::toSos()
                 if (!z.empty()) {
                     size_t z2_idx = nearestZeroIdx(z, p1);
                     z2 = z[z2_idx];
-                    z.erase(z.begin() + z2_idx);
+                    z.erase(z.begin() + static_cast<long>(z2_idx));
                 }
                 else {
                     // No more zeros, this will be (z+1) form
@@ -173,7 +173,7 @@ std::vector<BiquadCoefficients> Zpk::toSos()
     return sos;
 }
 
-Cascade Zpk::toCascade()
+Cascade Zpk::toCascade() const
 {
     return Cascade(toSos());
 }
@@ -242,13 +242,13 @@ Zpk butterworthPrototype(const size_t filterOrder)
 
     // This indexing ensures that if filterOrder is odd, the middle value will
     // be 0 to ensure exactly one real pole
-    for (int n = -filterOrder + 1; n < static_cast<int>(filterOrder); n += 2) {
-        poles.push_back(std::polar(1.0, M_PI + M_PI * n / (2.0 * filterOrder)));
+    for (int n = -static_cast<int>(filterOrder) + 1; n < static_cast<int>(filterOrder); n += 2) {
+        poles.push_back(std::polar(1.0, M_PI + M_PI * n / (2.0 * static_cast<double>(filterOrder))));
     }
 
     const auto zeros = std::vector<std::complex<double>>(); // no zeros
     constexpr double k = 1;
-    return Zpk(zeros, poles, k);
+    return { zeros, poles, k };
 }
 
 Zpk chebyshev1Prototype(size_t filterOrder, double rp)
@@ -262,8 +262,8 @@ Zpk chebyshev1Prototype(size_t filterOrder, double rp)
     // Arrange poles in an ellipse on the left half of the S-plane
     auto poles = std::vector<std::complex<double>>();
 
-    for (int n = -filterOrder + 1; n < static_cast<int>(filterOrder); n += 2) {
-        const auto theta = M_PI * n / (2.0 * filterOrder);
+    for (int n = -static_cast<int>(filterOrder) + 1; n < static_cast<int>(filterOrder); n += 2) {
+        const auto theta = M_PI * n / (2.0 * static_cast<double>(filterOrder));
         poles.push_back(-std::sinh(std::complex<double>(mu, theta)));
     }
 
@@ -277,12 +277,12 @@ Zpk chebyshev1Prototype(size_t filterOrder, double rp)
         k = k / std::sqrt(1 + eps * eps);
     }
 
-    return Zpk(zeros, poles, k);
+    return { zeros, poles, k };
 }
 
 Zpk chebyshev2Prototype(size_t filterOrder, double rs)
 {
-    const int N = filterOrder;
+    const auto N = static_cast<int>(filterOrder);
 
     // Ripple factor
     const double de = 1.0 / std::sqrt(std::pow(10.0, 0.1 * rs) - 1.0);
@@ -305,23 +305,22 @@ Zpk chebyshev2Prototype(size_t filterOrder, double rs)
 
     auto zeros = std::vector<std::complex<double>>();
 
-    for (int i = 0; i < iterIndices.size(); i++) {
-        const int m = iterIndices[i];
+    for (const int m : iterIndices) {
         std::complex<double> val(0.0, std::sin(static_cast<double>(m) * M_PI / (2.0 * static_cast<double>(N))));
         zeros.push_back(std::conj(1.0 / val));
     }
 
     // Create poles like with Butterworth
     auto poles = std::vector<std::complex<double>>();
-    for (int n = -filterOrder + 1; n < static_cast<int>(filterOrder); n += 2) {
-        poles.push_back(-std::exp(std::complex<double>(0.0, M_PI * n / (2.0 * filterOrder))));
+    for (int n = -static_cast<int>(filterOrder) + 1; n < static_cast<int>(filterOrder); n += 2) {
+        poles.push_back(-std::exp(std::complex<double>(0.0, M_PI * n / (2.0 * static_cast<double>(filterOrder)))));
     }
 
     // Warp into Chebyshev II
-    for (int i = 0; i < poles.size(); i++) {
-        auto pole = poles[i];
+    for (auto& i : poles) {
+        auto pole = i;
         std::complex<double> newPole(std::sinh(mu) * pole.real(), std::cosh(mu) * pole.imag());
-        poles[i] = 1.0 / newPole;
+        i = 1.0 / newPole;
     }
 
     std::complex<double> prod_p = 1.0;
@@ -336,20 +335,20 @@ Zpk chebyshev2Prototype(size_t filterOrder, double rs)
 
     double k = (prod_p / prod_z).real();
 
-    return Zpk(zeros, poles, k);
+    return { zeros, poles, k };
 }
 
 Zpk ellipticPrototype(size_t filterOrder, double rp, double rs)
 {
     if (filterOrder == 0) {
-        return Zpk({}, {}, std::pow(10, -rp / 20.0));
+        return { {}, {}, std::pow(10, -rp / 20.0) };
     }
     if (filterOrder == 1) {
         const auto k = std::sqrt(1.0 / math::pow10m1(0.1 * rp));
-        return Zpk({}, { -k }, k);
+        return { {}, { -k }, k };
     }
 
-    const int N = filterOrder;
+    const int N = static_cast<int>(filterOrder);
 
     const double epsSq = math::pow10m1(0.1 * rp);
     const double eps = std::sqrt(epsSq);
@@ -360,7 +359,6 @@ Zpk ellipticPrototype(size_t filterOrder, double rp, double rs)
     }
 
     const double val0 = math::ellipk(ck1sq);
-    const double val1 = math::ellipkm1(ck1sq);
     const double m = math::solveDegreeEquation(N, ck1sq);
     const double capk = math::ellipk(m);
     const double r = math::arcjacsc1(1.0 / eps, ck1sq);
@@ -411,7 +409,7 @@ Zpk ellipticPrototype(size_t filterOrder, double rp, double rs)
         gain /= std::sqrt(1.0 + epsSq);
     }
 
-    return Zpk(zeros, poles, gain);
+    return { zeros, poles, gain };
 }
 
 Zpk besselPrototype(int filterOrder)
@@ -428,7 +426,7 @@ Zpk besselPrototype(int filterOrder)
         p *= factor;
     }
 
-    return Zpk(zeros, poles, gain);
+    return { zeros, poles, gain };
 }
 
 Zpk lowpassToLowpass(const Zpk& zpk, double wc)
@@ -437,7 +435,7 @@ Zpk lowpassToLowpass(const Zpk& zpk, double wc)
     auto poles = zpk.getPoles();
     const auto gain = zpk.getGain();
 
-    const int degree = poles.size() - zeros.size();
+    const int degree = static_cast<int>(poles.size()) - static_cast<int>(zeros.size());
     if (degree < 0) {
         // Improper transfer function
         return {};
@@ -456,7 +454,7 @@ Zpk lowpassToLowpass(const Zpk& zpk, double wc)
     // Cancel out the net change to keep overall gain the same
     const double k = gain * std::pow(wc, degree);
 
-    return Zpk(zeros, poles, k);
+    return { zeros, poles, k };
 }
 
 Zpk lowpassToHighpass(const Zpk& zpk, double wc)
@@ -467,7 +465,7 @@ Zpk lowpassToHighpass(const Zpk& zpk, double wc)
     auto poles = zpk.getPoles();
     const auto gain = zpk.getGain();
 
-    const int degree = poles.size() - zeros.size();
+    const int degree = static_cast<int>(poles.size()) - static_cast<int>(zeros.size());
     if (degree < 0) {
         // Improper transfer function
         return {};
@@ -499,11 +497,11 @@ Zpk lowpassToHighpass(const Zpk& zpk, double wc)
     // If lowpass had zeros at infinity, inverting moves them to origin.
     if (degree > 0) {
         for (int i = 0; i < degree; ++i) {
-            zeros.push_back(std::complex<double>(0, 0));
+            zeros.emplace_back(0, 0);
         }
     }
 
-    return Zpk(zeros, poles, gain * ratio.real());
+    return { zeros, poles, gain * ratio.real() };
 }
 
 Zpk lowpassToBandpass(const Zpk& zpk, double w0, double bw)
@@ -546,10 +544,10 @@ Zpk lowpassToBandpass(const Zpk& zpk, double w0, double bw)
 
     // Move any zeros that were at infinity to the center of the stopband
     for (int i = 0; i < degree; ++i) {
-        newZeros.push_back(std::complex<double>(0, 0));
+        newZeros.emplace_back(0, 0);
     }
 
-    return Zpk(newZeros, newPoles, k);
+    return { newZeros, newPoles, k };
 }
 
 Zpk lowpassToBandstop(const Zpk& zpk, double w0, double bw)
@@ -560,7 +558,7 @@ https: // github.com/scipy/scipy/blob/b1296b9b4393e251511fe8fdd3e58c22a1124899/s
     const auto poles = zpk.getPoles();
     const auto gain = zpk.getGain();
 
-    const int degree = poles.size() - zeros.size();
+    const int degree = static_cast<int>(poles.size()) - static_cast<int>(zeros.size());
     if (degree < 0) {
         // Improper transfer function
         return {};
@@ -611,7 +609,7 @@ https: // github.com/scipy/scipy/blob/b1296b9b4393e251511fe8fdd3e58c22a1124899/s
         newZeros.push_back(center_neg);
     }
 
-    return Zpk(newZeros, newPoles, k);
+    return { newZeros, newPoles, k };
 }
 
 } // namespace iirfilters

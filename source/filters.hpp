@@ -59,14 +59,14 @@ class Zpk
      * @return A vector of BiquadCoefficients, where each set of coefficients
      * represents a second-order section of the filter.
      */
-    std::vector<BiquadCoefficients> toSos();
+    std::vector<BiquadCoefficients> toSos() const;
 
     /**
      * Converts the Zero-Pole-Gain (Zpk) model to a cascading filter structure.
      *
      * @return A Cascade object representing the filter as a series of second-order sections.
      */
-    Cascade toCascade();
+    Cascade toCascade() const;
 
   private:
     std::vector<std::complex<double>> zeros{};
