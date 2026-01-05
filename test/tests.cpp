@@ -442,6 +442,66 @@ TEST_CASE("besselPrototype - Seventh Order", "[besselPrototype]")
     requireApproxEqual(poles, expectedPoles);
 }
 
+TEST_CASE("legendrePrototype - Third Order", "[legendrePrototype]")
+{
+    // Legendre "Optimum-L" filter poles
+    const auto result = legendrePrototype(3);
+    REQUIRE(result.getGain() == Catch::Approx(1.0));
+
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+    REQUIRE(zeros.size() == 0);
+    REQUIRE(poles.size() == 3);
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { -0.345185619, 0.9008656355 },
+        { -0.345185619, -0.9008656355 },
+        { -0.6203318171, 0.0 },
+    };
+    requireApproxEqual(poles, expectedPoles);
+}
+
+TEST_CASE("legendrePrototype - Fourth Order", "[legendrePrototype]")
+{
+    // Legendre "Optimum-L" filter poles
+    const auto result = legendrePrototype(4);
+    REQUIRE(result.getGain() == Catch::Approx(1.0));
+
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+    REQUIRE(zeros.size() == 0);
+    REQUIRE(poles.size() == 4);
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { -0.2316887227, -0.9455106639 },
+        { -0.2316887227, 0.9455106639 },
+        { -0.5497434238, 0.3585718162 },
+        { -0.5497434238, -0.3585718162 },
+    };
+    requireApproxEqual(poles, expectedPoles);
+}
+
+TEST_CASE("legendrePrototype - Fifth Order", "[legendrePrototype]")
+{
+    // Legendre "Optimum-L" filter poles
+    const auto result = legendrePrototype(5);
+    REQUIRE(result.getGain() == Catch::Approx(1.0));
+
+    const auto zeros = result.getZeros();
+    const auto poles = result.getPoles();
+    REQUIRE(zeros.size() == 0);
+    REQUIRE(poles.size() == 5);
+
+    const std::vector<std::complex<double>> expectedPoles = {
+        { -0.1535867376, 0.9681464078 },
+        { -0.1535867376, -0.9681464078 },
+        { -0.3881398518, 0.5886323381 },
+        { -0.3881398518, -0.5886323381 },
+        { -0.4680898756, 0.0 },
+    };
+    requireApproxEqual(poles, expectedPoles);
+}
+
 TEST_CASE("lowpassToLowpass - basic test", "[lowpassToLowpass]")
 {
     // >>> from scipy.signal import lp2lp_zpk

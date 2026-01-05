@@ -429,6 +429,50 @@ Zpk besselPrototype(int filterOrder)
     return { zeros, poles, gain };
 }
 
+Zpk legendrePrototype(int filterOrder)
+{
+    if (filterOrder <= 0) {
+        return { {}, {}, 1.0 };
+    }
+
+    std::vector<std::complex<double>> zeros{};
+    constexpr double gain = 1.0;
+
+    // Get Legendre "Optimum-L" polynomial coefficients
+    const auto w = math::legendreOptimumLCoefficients(filterOrder);
+
+    // Form the characteristic polynomial: 1 + w[0] + w[1]*s^2 + w[2]*s^4 + ...
+    // This alternates coefficients for even powers of s
+    const int degree = filterOrder * 2;
+    std::vector<double> polyCoef(degree + 1, 0.0);
+
+    polyCoef[0] = 1.0 + w[0];
+    for (int i = 1; i <= filterOrder; i++) {
+        // w[i] corresponds to s^(2i), with alternating sign
+        polyCoef[2 * i] = w[i] * ((i & 1) ? -1.0 : 1.0);
+    }
+
+    // Find roots of the polynomial
+    auto allRoots = math::findPolynomialRoots(polyCoef);
+
+    // Select only roots in the left half-plane (stable poles)
+    std::vector<std::complex<double>> poles;
+    for (const auto& root : allRoots) {
+        if (root.real() <= 0.0) {
+            poles.push_back(root);
+        }
+    }
+
+    // Sort by descending imaginary part and keep only filterOrder poles
+    std::sort(poles.begin(), poles.end(), [](const auto& a, const auto& b) {
+        return std::abs(a.imag()) > std::abs(b.imag());
+    });
+
+    poles.resize(filterOrder);
+
+    return { zeros, poles, gain };
+}
+
 Zpk lowpassToLowpass(const Zpk& zpk, double wc)
 {
     auto zeros = zpk.getZeros();

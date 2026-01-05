@@ -149,6 +149,37 @@ std::vector<double> reverseBesselPolynomial(int order);
  */
 std::vector<std::complex<double>> findPolynomialRoots(const std::vector<double>& coef);
 
+/**
+ * Compute Legendre polynomial of the 1st kind using recursion relation
+ *
+ * Computes the coefficients of the Legendre polynomial P_n(x) using the recursion:
+ * (n+1)P_{n+1} = (2n+1)xP_n - nP_{n-1}
+ *
+ * See also https://github.com/vinniefalco/DSPFilters/blob/acc49170e79a94fcb9c04b8a2116e9f8dffd1c7d/shared/DSPFilters/source/Legendre.cpp#L71
+ *
+ * @param p Output vector that will contain the polynomial coefficients,
+ *          where p[i] is the coefficient of x^i
+ * @param n The order of the Legendre polynomial
+ */
+void legendrePolynomial(std::vector<double>& p, int n);
+
+/**
+ * Compute coefficients for Legendre "Optimum-L" filter polynomial
+ *
+ * Implements the Papoulis algorithm for computing the characteristic polynomial
+ * coefficients for an "Optimum-L" (Legendre) filter. This algorithm produces
+ * filters with monotonic response in both passband and stopband.
+ *
+ * See also https://github.com/vinniefalco/DSPFilters/blob/acc49170e79a94fcb9c04b8a2116e9f8dffd1c7d/shared/DSPFilters/source/Legendre.cpp#L126
+ *
+ * Based on algorithm by C. Bond from Kuo "Network Analysis and Synthesis"
+ * and Papoulis "On Monotonic Response Filters", Proc. IRE, 47, Feb. 1959.
+ *
+ * @param n The filter order
+ * @return Vector of polynomial coefficients w[i] corresponding to s^(2i) terms
+ */
+std::vector<double> legendreOptimumLCoefficients(int n);
+
 } // namespace iirfilters::math
 
 #endif

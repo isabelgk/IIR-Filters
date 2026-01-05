@@ -503,4 +503,140 @@ std::vector<std::complex<double>> findPolynomialRoots(const std::vector<double>&
     return roots;
 }
 
+void legendrePolynomial(std::vector<double>& p, int n)
+{
+    p.resize(n + 1);
+
+    if (n == 0) {
+        p[0] = 1.0;
+        return;
+    }
+    if (n == 1) {
+        p[0] = 0.0;
+        p[1] = 1.0;
+        return;
+    }
+
+    // P_2(x) = -0.5 + 1.5*x^2
+    p[0] = -0.5;
+    p[1] = 0.0;
+    p[2] = 1.5;
+
+    if (n == 2) return;
+
+    std::vector<double> aa(n + 1, 0.0);
+    std::vector<double> bb(n + 1, 0.0);
+    bb[1] = 1.0;
+
+    for (int i = 3; i <= n; i++) {
+        for (int j = 0; j <= i; j++) {
+            aa[j] = bb[j];
+            bb[j] = p[j];
+            p[j] = 0.0;
+        }
+        for (int j = i - 2; j >= 0; j -= 2) {
+            p[j] -= (i - 1) * aa[j] / i;
+        }
+        for (int j = i - 1; j >= 0; j -= 2) {
+            p[j + 1] += (2 * i - 1) * bb[j] / i;
+        }
+    }
+}
+
+std::vector<double> legendreOptimumLCoefficients(int n)
+{
+    const int k = (n - 1) / 2;
+    constexpr double sqrt2 = 1.41421356237309504880;
+
+    // Form vector of 'a' constants
+    std::vector<double> a(k + 1);
+    if (n & 1) {
+        // odd order
+        for (int i = 0; i <= k; i++) {
+            a[i] = (2.0 * i + 1.0) / (sqrt2 * (k + 1.0));
+        }
+    } else {
+        // even order
+        for (int i = 0; i < k + 1; i++) {
+            a[i] = 0.0;
+        }
+        if (k & 1) {
+            for (int i = 1; i <= k; i += 2) {
+                a[i] = (2 * i + 1) / std::sqrt(static_cast<double>((k + 1) * (k + 2)));
+            }
+        } else {
+            for (int i = 0; i <= k; i += 2) {
+                a[i] = (2 * i + 1) / std::sqrt(static_cast<double>((k + 1) * (k + 2)));
+            }
+        }
+    }
+
+    // Form s[] = sum of a[i]*P[i] where P[i] are Legendre polynomials
+    std::vector<double> s(n + 1, 0.0);
+    s[0] = a[0];
+    s[1] = a[1];
+
+    for (int i = 2; i <= k; i++) {
+        std::vector<double> p;
+        legendrePolynomial(p, i);
+        for (int j = 0; j <= i; j++) {
+            s[j] += a[i] * p[j];
+        }
+    }
+
+    // Form v[] = square of s[]
+    std::vector<double> v(2 * k + 3, 0.0);
+    for (int i = 0; i <= k; i++) {
+        for (int j = 0; j <= k; j++) {
+            v[i + j] += s[i] * s[j];
+        }
+    }
+
+    // Modify integrand for even 'n'
+    v[2 * k + 1] = 0.0;
+    if ((n & 1) == 0) {
+        for (int i = n; i >= 0; i--) {
+            v[i + 1] += v[i];
+        }
+    }
+
+    // Form integral of v[]
+    for (int i = n + 1; i >= 0; i--) {
+        v[i + 1] = v[i] / (i + 1.0);
+    }
+    v[0] = 0.0;
+
+    // Clear s[] for use in computing definite integral
+    for (int i = 0; i < n + 2; i++) {
+        s[i] = 0.0;
+    }
+    s[0] = -1.0;
+    s[1] = 2.0;
+
+    // Calculate definite integral to get w[] coefficients
+    std::vector<double> w(n + 1, 0.0);
+    for (int i = 1; i <= n; i++) {
+        if (i > 1) {
+            double c0 = -s[0];
+            for (int j = 1; j < i + 1; j++) {
+                double c1 = -s[j] + 2.0 * s[j - 1];
+                s[j - 1] = c0;
+                c0 = c1;
+            }
+            double c1 = 2.0 * s[i];
+            s[i] = c0;
+            s[i + 1] = c1;
+        }
+        for (int j = i; j > 0; j--) {
+            w[j] += v[i] * s[j];
+        }
+    }
+
+    if ((n & 1) == 0) {
+        w[1] = 0.0;
+    }
+
+    return w;
+}
+
 } // namespace iirfilters::math

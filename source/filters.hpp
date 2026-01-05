@@ -214,6 +214,25 @@ Zpk ellipticPrototype(size_t filterOrder, double rp, double rs);
 Zpk besselPrototype(int filterOrder);
 
 /**
+ * Generate the zero/pole/gain structure for the analog prototype of an
+ * N-th order Legendre filter. The filter has an angular cutoff frequency
+ * of 1 rad/s.
+ *
+ * The Legendre filter (also known as "Optimum L" filter) provides a monotonic
+ * response in both passband and stopband, with steeper rolloff than Butterworth
+ * but without the ripple of Chebyshev filters. The design is based on Legendre
+ * polynomials using the Papoulis method.
+ *
+ * Note: There is no equivalent SciPy function. This implementation is based on
+ * the algorithm from C. Bond, as described in Kuo's "Network Analysis and Synthesis"
+ * and Papoulis' "On Monotonic Response Filters" (Proc. IRE, 47, Feb. 1959).
+ *
+ * @param filterOrder The order of the Legendre filter.
+ * @return A Zpk object representing the Legendre prototype filter.
+ */
+Zpk legendrePrototype(int filterOrder);
+
+/**
  * Transforms a lowpass filter in Zero-Pole-Gain (Zpk) form to another lowpass filter
  * with a different cutoff frequency.
  *
