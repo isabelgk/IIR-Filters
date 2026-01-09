@@ -24,7 +24,7 @@ bool contains(const std::vector<std::complex<double>>& x, const std::complex<dou
 void requireApproxEqual(const std::vector<double>& a, const std::vector<double>& b)
 {
     REQUIRE(a.size() == b.size());
-    for (auto i = 0; i < a.size(); i++) {
+    for (size_t i = 0; i < a.size(); i++) {
         REQUIRE(std::abs(a[i] - b[i]) < TOLERANCE);
     }
 }
