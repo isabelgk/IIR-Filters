@@ -173,7 +173,7 @@ TEST_CASE("chebyshev1Prototype - Sixth Order", "[chebyshev1Prototype]")
 TEST_CASE("chebyshev1Prototype - Seventh Order", "[chebyshev1Prototype]")
 {
     // >>> from scipy import signal
-    // >>> signal.butter(7, 0.71)
+    // >>> signal.cheb1ap(7, 0.71)
     const auto result = chebyshev1Prototype(7, 0.71);
     const auto poles = result.getPoles();
     REQUIRE(result.getZeros().size() == 0);
