@@ -572,7 +572,7 @@ std::vector<double> legendreOptimumLCoefficients(int n)
     }
 
     // Form s[] = sum of a[i]*P[i] where P[i] are Legendre polynomials
-    std::vector<double> s(n + 1, 0.0);
+    std::vector<double> s(n + 2, 0.0);
     s[0] = a[0];
     s[1] = a[1];
 
@@ -585,7 +585,7 @@ std::vector<double> legendreOptimumLCoefficients(int n)
     }
 
     // Form v[] = square of s[]
-    std::vector<double> v(2 * k + 3, 0.0);
+    std::vector<double> v(n + 3, 0.0);
     for (int i = 0; i <= k; i++) {
         for (int j = 0; j <= k; j++) {
             v[i + j] += s[i] * s[j];
