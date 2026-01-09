@@ -302,6 +302,65 @@ double prewarpFrequency(double digitalFreqHz, double sampleRate);
  */
 Zpk bilinearTransform(const Zpk& analog, double sampleRate);
 
+/**
+ * Evaluates an analog transfer function at a given angular frequency.
+ *
+ * Computes H(jω) = k * ∏(jω - z_i) / ∏(jω - p_i)
+ *
+ * Equivalent to the SciPy `freqs_zpk` function evaluated at a single frequency.
+ *
+ * @param zpk The analog filter in Zero-Pole-Gain form.
+ * @param omega The angular frequency (rad/s) at which to evaluate.
+ * @return The complex frequency response H(jω).
+ */
+std::complex<double> freqsZpk(const Zpk& zpk, double omega);
+
+/**
+ * Evaluates a single biquad section at a given normalized frequency.
+ *
+ * Computes H(e^(jω)) for a single second-order section.
+ *
+ * @param coef The biquad coefficients.
+ * @param normalizedFreq The normalized angular frequency (0 to π corresponds to 0 to Nyquist).
+ * @return The complex frequency response.
+ */
+std::complex<double> freqzSos(const BiquadCoefficients& coef, double normalizedFreq);
+
+/**
+ * Evaluates a cascade of biquad sections at a given normalized frequency.
+ *
+ * Computes H(e^(jω)) for a cascade of second-order sections.
+ *
+ * Equivalent to the SciPy `sosfreqz` function evaluated at a single frequency.
+ *
+ * @param sos The vector of biquad coefficients.
+ * @param normalizedFreq The normalized angular frequency (0 to π corresponds to 0 to Nyquist).
+ * @return The complex frequency response.
+ */
+std::complex<double> freqzSos(const std::vector<BiquadCoefficients>& sos, double normalizedFreq);
+
+/**
+ * Evaluates an analog transfer function at multiple angular frequencies.
+ *
+ * Equivalent to the SciPy `freqs_zpk` function.
+ *
+ * @param zpk The analog filter in Zero-Pole-Gain form.
+ * @param omega Vector of angular frequencies (rad/s) at which to evaluate.
+ * @return Vector of complex frequency responses.
+ */
+std::vector<std::complex<double>> freqsZpk(const Zpk& zpk, const std::vector<double>& omega);
+
+/**
+ * Evaluates a cascade of biquad sections at multiple normalized frequencies.
+ *
+ * Equivalent to the SciPy `sosfreqz` function.
+ *
+ * @param sos The vector of biquad coefficients.
+ * @param w Vector of normalized angular frequencies (0 to π corresponds to 0 to Nyquist).
+ * @return Vector of complex frequency responses.
+ */
+std::vector<std::complex<double>> freqzSos(const std::vector<BiquadCoefficients>& sos, const std::vector<double>& w);
+
 } // namespace iirfilters
 
 #endif

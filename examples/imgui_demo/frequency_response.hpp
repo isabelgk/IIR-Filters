@@ -14,12 +14,6 @@ struct FrequencyResponseData
     std::vector<double> phase;
 };
 
-std::complex<double> evaluateAnalogTransferFunction(
-    const std::vector<std::complex<double>>& zeros,
-    const std::vector<std::complex<double>>& poles,
-    double gain,
-    double omega);
-
 FrequencyResponseData computeAnalogFrequencyResponse(
     const std::vector<std::complex<double>>& zeros,
     const std::vector<std::complex<double>>& poles,
@@ -28,14 +22,6 @@ FrequencyResponseData computeAnalogFrequencyResponse(
     double omegaMax,
     size_t numPoints,
     bool logScale = true);
-
-std::complex<double> evaluateBiquad(
-    const iirfilters::BiquadCoefficients& coef,
-    double normalizedFreq);
-
-std::complex<double> evaluateCascade(
-    const std::vector<iirfilters::BiquadCoefficients>& sos,
-    double normalizedFreq);
 
 FrequencyResponseData computeDigitalFrequencyResponse(
     const std::vector<iirfilters::BiquadCoefficients>& sos,

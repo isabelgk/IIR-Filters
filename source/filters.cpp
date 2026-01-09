@@ -711,4 +711,64 @@ Zpk bilinearTransform(const Zpk& analog, double sampleRate)
     return { digitalZeros, digitalPoles, gain };
 }
 
+std::complex<double> freqsZpk(const Zpk& zpk, double omega)
+{
+    // https://github.com/scipy/scipy/blob/v1.16.2/scipy/signal/_filter_design.py#L638
+    std::complex<double> s(0.0, omega);
+
+    std::complex<double> num(zpk.getGain(), 0.0);
+    for (const auto& z : zpk.getZeros()) {
+        num *= (s - z);
+    }
+
+    std::complex<double> den(1.0, 0.0);
+    for (const auto& p : zpk.getPoles()) {
+        den *= (s - p);
+    }
+
+    return num / den;
+}
+
+std::complex<double> freqzSos(const BiquadCoefficients& coef, double w)
+{
+    // https://github.com/scipy/scipy/blob/v1.16.2/scipy/signal/_filter_design.py#L341
+    std::complex<double> z = std::exp(std::complex<double>(0.0, w));
+    std::complex<double> z_inv = 1.0 / z;
+    std::complex<double> z_inv2 = z_inv * z_inv;
+
+    std::complex<double> num = coef.a0 + coef.a1 * z_inv + coef.a2 * z_inv2;
+    std::complex<double> den = 1.0 + coef.b1 * z_inv + coef.b2 * z_inv2;
+
+    return num / den;
+}
+
+std::complex<double> freqzSos(const std::vector<BiquadCoefficients>& sos, double w)
+{
+    std::complex<double> H(1.0, 0.0);
+    for (const auto& bq : sos) {
+        H *= freqzSos(bq, w);
+    }
+    return H;
+}
+
+std::vector<std::complex<double>> freqsZpk(const Zpk& zpk, const std::vector<double>& omega)
+{
+    std::vector<std::complex<double>> result;
+    result.reserve(omega.size());
+    for (const auto& w : omega) {
+        result.push_back(freqsZpk(zpk, w));
+    }
+    return result;
+}
+
+std::vector<std::complex<double>> freqzSos(const std::vector<BiquadCoefficients>& sos, const std::vector<double>& w)
+{
+    std::vector<std::complex<double>> result;
+    result.reserve(w.size());
+    for (const auto& freq : w) {
+        result.push_back(freqzSos(sos, freq));
+    }
+    return result;
+}
+
 } // namespace iirfilters

@@ -770,3 +770,169 @@ TEST_CASE("bilinearTransform - First order Butterworth", "[bilinearTransform]")
     requireApproxEqual(result.getPoles(), expectedPoles);
     REQUIRE(result.getGain() == Catch::Approx(0.25342728698434797));
 }
+
+TEST_CASE("freqsZpk - Butterworth 2nd order prototype", "[freqsZpk]")
+{
+    // >>> from scipy import signal
+    // >>> z, p, k = signal.buttap(2)
+    // >>> signal.freqs_zpk(z, p, k, [0.1, 1.0, 10.0])
+    const Zpk zpk(
+        {},
+        { { -0.70710678, 0.70710678 }, { -0.70710678, -0.70710678 } },
+        1.0);
+
+    auto h1 = freqsZpk(zpk, 0.1);
+    REQUIRE(h1.real() == Catch::Approx(0.9899010098990102));
+    REQUIRE(h1.imag() == Catch::Approx(-0.1414072155157579));
+
+    auto h2 = freqsZpk(zpk, 1.0);
+    REQUIRE(h2.real() == Catch::Approx(0.0).margin(TOLERANCE));
+    REQUIRE(h2.imag() == Catch::Approx(-0.7071067811865475));
+
+    auto h3 = freqsZpk(zpk, 10.0);
+    REQUIRE(h3.real() == Catch::Approx(-0.0098990100989901));
+    REQUIRE(h3.imag() == Catch::Approx(-0.0014140721551575794));
+}
+
+TEST_CASE("freqsZpk - Chebyshev II 3rd order with zeros", "[freqsZpk]")
+{
+    // >>> from scipy import signal
+    // >>> z, p, k = signal.cheb2ap(3, 40)
+    // >>> signal.freqs_zpk(z, p, k, [0.5, 1.0, 2.0])
+    const Zpk zpk(
+        { { 0.0, -1.15470054 }, { 0.0, 1.15470054 } },
+        { { -0.16114901, -0.29593315 }, { -0.35229951, 0.0 }, { -0.16114901, 0.29593315 } },
+        0.03000150011250936);
+
+    auto h1 = freqsZpk(zpk, 0.5);
+    REQUIRE(h1.real() == Catch::Approx(-0.2506540250421875));
+    REQUIRE(h1.imag() == Catch::Approx(0.022317855233752404));
+
+    auto h2 = freqsZpk(zpk, 1.0);
+    REQUIRE(h2.real() == Catch::Approx(-0.006345637917933374));
+    REQUIRE(h2.imag() == Catch::Approx(0.007728704898913293));
+
+    auto h3 = freqsZpk(zpk, 2.0);
+    REQUIRE(h3.real() == Catch::Approx(0.003322818958966683));
+    REQUIRE(h3.imag() == Catch::Approx(-0.009431801215352847));
+}
+
+TEST_CASE("freqzSos - single biquad section", "[freqzSos]")
+{
+    // >>> from scipy import signal
+    // >>> sos = np.array([[0.25, 0.5, 0.25, 1.0, -0.5, 0.1]])
+    // >>> signal.sosfreqz(sos, worN=[0.0, 0.5, 1.0, 2.0, np.pi])
+    BiquadCoefficients coef;
+    coef.a0 = 0.25;
+    coef.a1 = 0.5;
+    coef.a2 = 0.25;
+    coef.b1 = -0.5;
+    coef.b2 = 0.1;
+
+    auto h1 = freqzSos(coef, 0.0);
+    REQUIRE(h1.real() == Catch::Approx(1.6666666666666667));
+    REQUIRE(h1.imag() == Catch::Approx(0.0).margin(TOLERANCE));
+
+    auto h2 = freqzSos(coef, 0.5);
+    REQUIRE(h2.real() == Catch::Approx(1.0847692934080337));
+    REQUIRE(h2.imag() == Catch::Approx(-1.005842329520787));
+
+    auto h3 = freqzSos(coef, 1.0);
+    REQUIRE(h3.real() == Catch::Approx(0.12473482105570932));
+    REQUIRE(h3.imag() == Catch::Approx(-1.0014006088698293));
+
+    auto h4 = freqzSos(coef, 2.0);
+    REQUIRE(h4.real() == Catch::Approx(-0.1761753426905888));
+    REQUIRE(h4.imag() == Catch::Approx(-0.15053455809169503));
+
+    auto h5 = freqzSos(coef, M_PI);
+    REQUIRE(h5.real() == Catch::Approx(0.0).margin(TOLERANCE));
+    REQUIRE(h5.imag() == Catch::Approx(0.0).margin(TOLERANCE));
+}
+
+TEST_CASE("freqzSos - cascade of biquads", "[freqzSos]")
+{
+    // >>> from scipy import signal
+    // >>> sos = signal.butter(4, 0.2, output='sos')
+    // >>> signal.sosfreqz(sos, worN=[0.0, 0.1*np.pi, 0.2*np.pi, 0.5*np.pi])
+    std::vector<BiquadCoefficients> sos(2);
+
+    sos[0].a0 = 0.0048243434;
+    sos[0].a1 = 0.0096486867;
+    sos[0].a2 = 0.0048243434;
+    sos[0].b1 = -1.0485995764;
+    sos[0].b2 = 0.2961403576;
+
+    sos[1].a0 = 1.0;
+    sos[1].a1 = 2.0;
+    sos[1].a2 = 1.0;
+    sos[1].b1 = -1.3209134308;
+    sos[1].b2 = 0.6327387929;
+
+    auto h1 = freqzSos(sos, 0.0);
+    REQUIRE(h1.real() == Catch::Approx(1.0));
+    REQUIRE(h1.imag() == Catch::Approx(0.0).margin(TOLERANCE));
+
+    auto h2 = freqzSos(sos, 0.1 * M_PI);
+    REQUIRE(h2.real() == Catch::Approx(0.2444148353123437));
+    REQUIRE(h2.imag() == Catch::Approx(-0.9680308428253678));
+
+    auto h3 = freqzSos(sos, 0.2 * M_PI);
+    REQUIRE(h3.real() == Catch::Approx(-0.7071067811865477));
+    REQUIRE(h3.imag() == Catch::Approx(0.0).margin(TOLERANCE));
+
+    auto h4 = freqzSos(sos, 0.5 * M_PI);
+    REQUIRE(h4.real() == Catch::Approx(0.007251524968304738));
+    REQUIRE(h4.imag() == Catch::Approx(0.008463141045463913));
+}
+
+TEST_CASE("freqsZpk - vector of frequencies", "[freqsZpk]")
+{
+    // Same as single-frequency test but using vector overload
+    const Zpk zpk(
+        {},
+        { { -0.70710678, 0.70710678 }, { -0.70710678, -0.70710678 } },
+        1.0);
+
+    std::vector<double> omega = { 0.1, 1.0, 10.0 };
+    auto H = freqsZpk(zpk, omega);
+
+    REQUIRE(H.size() == 3);
+    REQUIRE(H[0].real() == Catch::Approx(0.9899010098990102));
+    REQUIRE(H[0].imag() == Catch::Approx(-0.1414072155157579));
+    REQUIRE(H[1].real() == Catch::Approx(0.0).margin(TOLERANCE));
+    REQUIRE(H[1].imag() == Catch::Approx(-0.7071067811865475));
+    REQUIRE(H[2].real() == Catch::Approx(-0.0098990100989901));
+    REQUIRE(H[2].imag() == Catch::Approx(-0.0014140721551575794));
+}
+
+TEST_CASE("freqzSos - vector of frequencies", "[freqzSos]")
+{
+    // Same as cascade test but using vector overload
+    std::vector<BiquadCoefficients> sos(2);
+
+    sos[0].a0 = 0.0048243434;
+    sos[0].a1 = 0.0096486867;
+    sos[0].a2 = 0.0048243434;
+    sos[0].b1 = -1.0485995764;
+    sos[0].b2 = 0.2961403576;
+
+    sos[1].a0 = 1.0;
+    sos[1].a1 = 2.0;
+    sos[1].a2 = 1.0;
+    sos[1].b1 = -1.3209134308;
+    sos[1].b2 = 0.6327387929;
+
+    std::vector<double> w = { 0.0, 0.1 * M_PI, 0.2 * M_PI, 0.5 * M_PI };
+    auto H = freqzSos(sos, w);
+
+    REQUIRE(H.size() == 4);
+    REQUIRE(H[0].real() == Catch::Approx(1.0));
+    REQUIRE(H[0].imag() == Catch::Approx(0.0).margin(TOLERANCE));
+    REQUIRE(H[1].real() == Catch::Approx(0.2444148353123437));
+    REQUIRE(H[1].imag() == Catch::Approx(-0.9680308428253678));
+    REQUIRE(H[2].real() == Catch::Approx(-0.7071067811865477));
+    REQUIRE(H[2].imag() == Catch::Approx(0.0).margin(TOLERANCE));
+    REQUIRE(H[3].real() == Catch::Approx(0.007251524968304738));
+    REQUIRE(H[3].imag() == Catch::Approx(0.008463141045463913));
+}
