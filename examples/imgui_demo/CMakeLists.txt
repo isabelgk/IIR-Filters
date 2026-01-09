@@ -63,7 +63,6 @@ add_executable(imgui_demo
         app.cpp
         filter_designer.cpp
         frequency_response.cpp
-        bilinear_transform.cpp
 )
 
 target_include_directories(imgui_demo PRIVATE

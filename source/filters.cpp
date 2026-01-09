@@ -656,4 +656,59 @@ https: // github.com/scipy/scipy/blob/b1296b9b4393e251511fe8fdd3e58c22a1124899/s
     return { newZeros, newPoles, k };
 }
 
+double prewarpFrequency(const double digitalFreqHz, const double sampleRate)
+{
+    const double wd = 2.0 * M_PI * digitalFreqHz;
+    return 2.0 * sampleRate * std::tan(wd / (2.0 * sampleRate));
+}
+
+Zpk bilinearTransform(const Zpk& analog, double sampleRate)
+{
+    // https://github.com/scipy/scipy/blob/v1.16.2/scipy/signal/_filter_design.py#L2904
+
+    const double fs2 = 2.0 * sampleRate;
+
+    auto transformPoint = [fs2](const std::complex<double> s) {
+        return (1.0 + s / fs2) / (1.0 - s / fs2);
+    };
+
+    std::vector<std::complex<double>> digitalZeros;
+    std::vector<std::complex<double>> digitalPoles;
+
+    for (const auto& z : analog.getZeros()) {
+        digitalZeros.push_back(transformPoint(z));
+    }
+
+    for (const auto& p : analog.getPoles()) {
+        digitalPoles.push_back(transformPoint(p));
+    }
+
+    // Any zeros that were at infinity get moved to the Nyquist frequency
+    const int degree = static_cast<int>(digitalPoles.size()) - static_cast<int>(digitalZeros.size());
+    for (int i = 0; i < degree; ++i) {
+        digitalZeros.emplace_back(-1.0, 0.0);
+    }
+
+    // Compensate for gain change
+    std::complex<double> analogDc(analog.getGain(), 0.0);
+    for (const auto& z : analog.getZeros()) {
+        analogDc *= -z;
+    }
+    for (const auto& p : analog.getPoles()) {
+        analogDc /= -p;
+    }
+
+    std::complex<double> digitalDc(1.0, 0.0);
+    for (const auto& z : digitalZeros) {
+        digitalDc *= (1.0 - z);
+    }
+    for (const auto& p : digitalPoles) {
+        digitalDc /= (1.0 - p);
+    }
+
+    double gain = std::abs(analogDc) / std::abs(digitalDc);
+
+    return { digitalZeros, digitalPoles, gain };
+}
+
 } // namespace iirfilters

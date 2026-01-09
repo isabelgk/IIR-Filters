@@ -644,3 +644,129 @@ TEST_CASE("lowpassToBandstop - all-pole filter adds notch zeros", "[lowpassToBan
     requireApproxEqual(poles, expectedPoles);
     REQUIRE(result.getGain() == Catch::Approx(-12.857142857142858));
 }
+
+TEST_CASE("prewarpFrequency - 1kHz at 48kHz", "[prewarpFrequency]")
+{
+    // >>> fs = 48000; fc = 1000
+    // >>> 2 * fs * np.tan(np.pi * fc / fs)
+    REQUIRE(prewarpFrequency(1000, 48000) == Catch::Approx(6292.172430262869));
+}
+
+TEST_CASE("prewarpFrequency - 5kHz at 44.1kHz", "[prewarpFrequency]")
+{
+    // >>> fs = 44100; fc = 5000
+    // >>> 2 * fs * np.tan(np.pi * fc / fs)
+    REQUIRE(prewarpFrequency(5000, 44100) == Catch::Approx(32815.591119406854));
+}
+
+TEST_CASE("prewarpFrequency - 100Hz at 96kHz", "[prewarpFrequency]")
+{
+    // >>> fs = 96000; fc = 100
+    // >>> 2 * fs * np.tan(np.pi * fc / fs)
+    REQUIRE(prewarpFrequency(100, 96000) == Catch::Approx(628.3207736584609));
+}
+
+TEST_CASE("bilinearTransform - Butterworth 4th order lowpass", "[bilinearTransform]")
+{
+    // >>> from scipy import signal
+    // >>> z, p, k = signal.buttap(4)
+    // >>> fs = 48000; fc = 1000
+    // >>> wc = 2 * fs * np.tan(np.pi * fc / fs)
+    // >>> z_s, p_s, k_s = signal.lp2lp_zpk(z, p, k, wc)
+    // >>> signal.bilinear_zpk(z_s, p_s, k_s, fs)
+    const std::vector<std::complex<double>> analogZeros = {};
+    const std::vector<std::complex<double>> analogPoles = {
+        { -2407.91014265, 5813.20932335 },
+        { -5813.20932335, 2407.91014265 },
+        { -5813.20932335, -2407.91014265 },
+        { -2407.91014265, -5813.20932335 },
+    };
+    const double analogGain = 1567481637637286.5;
+
+    const Zpk analog(analogZeros, analogPoles, analogGain);
+    const auto result = bilinearTransform(analog, 48000);
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { -1.0, 0.0 },
+        { -1.0, 0.0 },
+        { -1.0, 0.0 },
+        { -1.0, 0.0 },
+    };
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 0.94427798, 0.11485352 },
+        { 0.88475217, 0.0445749 },
+        { 0.88475217, -0.0445749 },
+        { 0.94427798, -0.11485352 },
+    };
+
+    requireApproxEqual(result.getZeros(), expectedZeros);
+    requireApproxEqual(result.getPoles(), expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(1.555172178089176e-05));
+}
+
+TEST_CASE("bilinearTransform - Chebyshev II 3rd order with zeros", "[bilinearTransform]")
+{
+    // >>> from scipy import signal
+    // >>> z, p, k = signal.cheb2ap(3, 40)
+    // >>> fs = 44100; fc = 2000
+    // >>> wc = 2 * fs * np.tan(np.pi * fc / fs)
+    // >>> z_s, p_s, k_s = signal.lp2lp_zpk(z, p, k, wc)
+    // >>> signal.bilinear_zpk(z_s, p_s, k_s, fs)
+    const std::vector<std::complex<double>> analogZeros = {
+        { 0.0, -14609.38270555 },
+        { 0.0, 14609.38270555 },
+    };
+    const std::vector<std::complex<double>> analogPoles = {
+        { -2038.87277885, -3744.17480025 },
+        { -4457.32743398, 0.0 },
+        { -2038.87277885, 3744.17480025 },
+    };
+    const double analogGain = 379.58187626671537;
+
+    const Zpk analog(analogZeros, analogPoles, analogGain);
+    const auto result = bilinearTransform(analog, 44100);
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { 0.94659258, -0.32243215 },
+        { 0.94659258, 0.32243215 },
+        { -1.0, 0.0 },
+    };
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 0.95145209, -0.08096929 },
+        { 0.90378899, 0.0 },
+        { 0.95145209, 0.08096929 },
+    };
+
+    requireApproxEqual(result.getZeros(), expectedZeros);
+    requireApproxEqual(result.getPoles(), expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(0.00401405623566463));
+}
+
+TEST_CASE("bilinearTransform - First order Butterworth", "[bilinearTransform]")
+{
+    // >>> from scipy import signal
+    // >>> z, p, k = signal.buttap(1)
+    // >>> fs = 48000; fc = 5000
+    // >>> wc = 2 * fs * np.tan(np.pi * fc / fs)
+    // >>> z_s, p_s, k_s = signal.lp2lp_zpk(z, p, k, wc)
+    // >>> signal.bilinear_zpk(z_s, p_s, k_s, fs)
+    const std::vector<std::complex<double>> analogZeros = {};
+    const std::vector<std::complex<double>> analogPoles = {
+        { -32587.60885088, 0.0 },
+    };
+    const double analogGain = 32587.60885088408;
+
+    const Zpk analog(analogZeros, analogPoles, analogGain);
+    const auto result = bilinearTransform(analog, 48000);
+
+    const std::vector<std::complex<double>> expectedZeros = {
+        { -1.0, 0.0 },
+    };
+    const std::vector<std::complex<double>> expectedPoles = {
+        { 0.49314543, 0.0 },
+    };
+
+    requireApproxEqual(result.getZeros(), expectedZeros);
+    requireApproxEqual(result.getPoles(), expectedPoles);
+    REQUIRE(result.getGain() == Catch::Approx(0.25342728698434797));
+}

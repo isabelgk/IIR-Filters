@@ -1,5 +1,4 @@
 #include "filter_designer.hpp"
-#include "bilinear_transform.hpp"
 
 namespace demo {
 
@@ -33,12 +32,12 @@ DesignedFilter designFilter(const FilterParameters& params)
             break;
     }
 
-    double wc = prewarpFrequency(params.cutoffFreq, params.sampleRate);
-    double w0 = prewarpFrequency(params.centerFreq, params.sampleRate);
-    double bwHigh = prewarpFrequency(params.centerFreq + params.bandwidth / 2.0,
-                                     params.sampleRate);
-    double bwLow = prewarpFrequency(params.centerFreq - params.bandwidth / 2.0,
-                                    params.sampleRate);
+    double wc = iirfilters::prewarpFrequency(params.cutoffFreq, params.sampleRate);
+    double w0 = iirfilters::prewarpFrequency(params.centerFreq, params.sampleRate);
+    double bwHigh = iirfilters::prewarpFrequency(params.centerFreq + params.bandwidth / 2.0,
+                                                 params.sampleRate);
+    double bwLow = iirfilters::prewarpFrequency(params.centerFreq - params.bandwidth / 2.0,
+                                                params.sampleRate);
     double bw = bwHigh - bwLow;
 
     switch (params.transform) {
@@ -60,7 +59,7 @@ DesignedFilter designFilter(const FilterParameters& params)
             break;
     }
 
-    result.digitalZpk = bilinearTransform(result.analogTransformed, params.sampleRate);
+    result.digitalZpk = iirfilters::bilinearTransform(result.analogTransformed, params.sampleRate);
     result.sos = result.digitalZpk.toSos();
     result.valid = true;
 

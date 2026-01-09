@@ -279,6 +279,29 @@ Zpk lowpassToBandpass(const Zpk& zpk, double w0, double bw);
  */
 Zpk lowpassToBandstop(const Zpk& zpk, double w0, double bw);
 
+/**
+ * Prewarps a digital frequency to its corresponding analog frequency.
+ *
+ * Used before applying a frequency transformation to account for the
+ * frequency warping introduced by the bilinear transform.
+ *
+ * @param digitalFreqHz The desired digital frequency in Hz.
+ * @param sampleRate The sample rate in Hz.
+ * @return The prewarped analog frequency in rad/s.
+ */
+double prewarpFrequency(double digitalFreqHz, double sampleRate);
+
+/**
+ * Transforms an analog filter to a digital filter using the bilinear transform.
+ *
+ * Equivalent to the SciPy `bilinear_zpk` function.
+ *
+ * @param analog A reference to a Zpk object representing the analog filter.
+ * @param sampleRate The sample rate in Hz.
+ * @return A Zpk object representing the digital filter.
+ */
+Zpk bilinearTransform(const Zpk& analog, double sampleRate);
+
 } // namespace iirfilters
 
 #endif
