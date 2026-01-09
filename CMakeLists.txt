@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(BUILD_DEMO "Build Dear ImGui demo application" OFF)
 
 add_subdirectory(source)
+
+enable_testing()
 add_subdirectory(test)
 
 if(BUILD_DEMO)

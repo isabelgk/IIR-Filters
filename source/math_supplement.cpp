@@ -1,5 +1,6 @@
 #include "math_supplement.hpp"
 #include <algorithm>
+#include <array>
 
 namespace iirfilters::math {
 
@@ -522,7 +523,9 @@ void legendrePolynomial(std::vector<double>& p, int n)
     p[1] = 0.0;
     p[2] = 1.5;
 
-    if (n == 2) return;
+    if (n == 2) {
+        return;
+    }
 
     std::vector<double> aa(n + 1, 0.0);
     std::vector<double> bb(n + 1, 0.0);
@@ -555,7 +558,8 @@ std::vector<double> legendreOptimumLCoefficients(int n)
         for (int i = 0; i <= k; i++) {
             a[i] = (2.0 * i + 1.0) / (sqrt2 * (k + 1.0));
         }
-    } else {
+    }
+    else {
         // even order
         for (int i = 0; i < k + 1; i++) {
             a[i] = 0.0;
@@ -564,7 +568,8 @@ std::vector<double> legendreOptimumLCoefficients(int n)
             for (int i = 1; i <= k; i += 2) {
                 a[i] = (2 * i + 1) / std::sqrt(static_cast<double>((k + 1) * (k + 2)));
             }
-        } else {
+        }
+        else {
             for (int i = 0; i <= k; i += 2) {
                 a[i] = (2 * i + 1) / std::sqrt(static_cast<double>((k + 1) * (k + 2)));
             }

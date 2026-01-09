@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_demo:
+        description: 'Build the demo application'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_DEMO=${{ inputs.build_demo && 'ON' || 'OFF' }}
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: ctest --test-dir build --build-config Release --output-on-failure

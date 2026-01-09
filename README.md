@@ -1,5 +1,7 @@
 # IIR-Filters
 
+[![Test](https://github.com/isabelgk/IIR-Filters/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/isabelgk/IIR-Filters/actions/workflows/test.yml)
+
 A C++17 library implementing Infinite Impulse Response (IIR) digital filters.
 
 This is primarily a personal learning experiment for understanding IIR digital filters.
@@ -18,8 +20,6 @@ managed using CMake `FetchContent`.
 - **Mathematical utilities**: Elliptic integrals, polynomial root finding, and complex number handling
 
 ## Building
-
-Currently only MacOS has been tested, but Windows and Linux should also be supported.
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja

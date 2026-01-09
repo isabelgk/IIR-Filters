@@ -10,3 +10,7 @@ target_include_directories(
         PRIVATE
         "${CMAKE_CURRENT_LIST_DIR}"
 )
+
+if(MSVC)
+    target_compile_definitions(IirFilters PRIVATE _USE_MATH_DEFINES)
+endif()

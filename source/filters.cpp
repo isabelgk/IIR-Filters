@@ -1,6 +1,7 @@
 #include "filters.hpp"
 #include "math_supplement.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <limits>
 

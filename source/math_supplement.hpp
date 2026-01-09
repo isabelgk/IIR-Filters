@@ -1,6 +1,7 @@
 #ifndef MATH_SUPPLEMENT_H
 #define MATH_SUPPLEMENT_H
 
+#include <cmath>
 #include <complex>
 #include <vector>
 
