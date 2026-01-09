@@ -10,11 +10,16 @@ namespace {
 
 constexpr double TOLERANCE = 1e-7;
 
+bool approxEqual(const std::complex<double>& a, const std::complex<double>& b)
+{
+    return a.real() == Catch::Approx(b.real()).margin(TOLERANCE)
+        && a.imag() == Catch::Approx(b.imag()).margin(TOLERANCE);
+}
+
 bool contains(const std::vector<std::complex<double>>& x, const std::complex<double>& element)
 {
-    for (auto& el : x) {
-        if (std::abs(el.real() - element.real()) < TOLERANCE
-            && std::abs(el.imag() - element.imag()) < TOLERANCE) {
+    for (const auto& el : x) {
+        if (approxEqual(el, element)) {
             return true;
         }
     }
@@ -26,7 +31,7 @@ void requireApproxEqual(const std::vector<double>& a, const std::vector<double>&
     REQUIRE(a.size() == b.size());
     for (size_t i = 0; i < a.size(); i++) {
         INFO("Index " << i << ": expected " << b[i] << ", got " << a[i]);
-        REQUIRE(std::abs(a[i] - b[i]) < TOLERANCE);
+        REQUIRE(a[i] == Catch::Approx(b[i]).margin(TOLERANCE));
     }
 }
 
