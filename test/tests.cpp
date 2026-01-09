@@ -258,13 +258,15 @@ TEST_CASE("chebyshev2Prototype - Seventh Order", "[chebyshev2Prototype]")
     REQUIRE(result.getGain() == Catch::Approx(28.756777064046997));
 }
 
-TEST_CASE("ellipk - 0.6", "[ellipk]")
+TEST_CASE("ellipk - typical value", "[ellipk]")
 {
+    // m = 0.6
     REQUIRE(math::ellipk(0.6) == Catch::Approx(1.9495677498060258));
 }
 
-TEST_CASE("ellipkm1 - basic test", "[ellipkm1]")
+TEST_CASE("ellipkm1 - midrange value", "[ellipkm1]")
 {
+    // m1 = 0.62
     REQUIRE(math::ellipkm1(0.62) == Catch::Approx(1.7638983888837312));
 }
 
@@ -278,8 +280,9 @@ TEST_CASE("ellipkm1 - close to 0", "[ellipkm1]")
     REQUIRE(math::ellipkm1(0.01) == Catch::Approx(3.6956373629898747));
 }
 
-TEST_CASE("ellipj - u = 4, m = 0.2", "[ellipj]")
+TEST_CASE("ellipj - all Jacobi functions", "[ellipj]")
 {
+    // u = 4, m = 0.2
     double sn, cn, dn, ph;
     math::ellipj(4, 0.2, sn, cn, dn, ph);
     REQUIRE(sn == Catch::Approx(-0.6219243502072862));
@@ -288,13 +291,15 @@ TEST_CASE("ellipj - u = 4, m = 0.2", "[ellipj]")
     REQUIRE(ph == Catch::Approx(3.8127903862602888));
 }
 
-TEST_CASE("ellipdeg - basic test 1", "[ellipdeg]")
+TEST_CASE("solveDegreeEquation - low order", "[solveDegreeEquation]")
 {
+    // n = 2, k = 0.5
     REQUIRE(math::solveDegreeEquation(2, 0.5) == Catch::Approx(0.9705627484771397));
 }
 
-TEST_CASE("ellipdeg - basic test 2", "[ellipdeg]")
+TEST_CASE("solveDegreeEquation - high order", "[solveDegreeEquation]")
 {
+    // n = 10, k = 0.9
     REQUIRE(math::solveDegreeEquation(10, 0.9) == Catch::Approx(0.9999988431568166));
 }
 
@@ -365,7 +370,7 @@ TEST_CASE("ellipticPrototype - Seventh Order", "[ellipticPrototype]")
     requireApproxEqual(poles, expectedPoles);
 }
 
-TEST_CASE("reverseBesselPolynomial", "[reverseBesselPolynomial]")
+TEST_CASE("reverseBesselPolynomial - fifth order", "[reverseBesselPolynomial]")
 {
     const auto result = math::reverseBesselPolynomial(5);
     const std::vector<double> expected = {
@@ -380,7 +385,7 @@ TEST_CASE("reverseBesselPolynomial", "[reverseBesselPolynomial]")
     requireApproxEqual(result, expected);
 }
 
-TEST_CASE("evaluatePolynomial - degree 2", "[evaluatePolynomial]")
+TEST_CASE("evaluatePolynomial - quadratic with complex argument", "[evaluatePolynomial]")
 {
     std::vector<double> coef = {
         3.5, 1.0, 2.0
@@ -391,7 +396,7 @@ TEST_CASE("evaluatePolynomial - degree 2", "[evaluatePolynomial]")
     REQUIRE(result.real() == Catch::Approx(6.0));
 }
 
-TEST_CASE("evaluatePolynomial - degree 6", "[evaluatePolynomial]")
+TEST_CASE("evaluatePolynomial - sixth degree with complex argument", "[evaluatePolynomial]")
 {
     std::vector<double> coef = {
         0.9, 10.2, -0.3, -5.9, 2.1, 15.3, 0.5
@@ -509,7 +514,7 @@ TEST_CASE("legendrePrototype - Fifth Order", "[legendrePrototype]")
     requireApproxEqual(poles, expectedPoles);
 }
 
-TEST_CASE("lowpassToLowpass - basic test", "[lowpassToLowpass]")
+TEST_CASE("lowpassToLowpass - scales cutoff frequency", "[lowpassToLowpass]")
 {
     // >>> from scipy.signal import lp2lp_zpk
     // >>> z = [ 7, 2 ]
@@ -537,7 +542,7 @@ TEST_CASE("lowpassToLowpass - basic test", "[lowpassToLowpass]")
     REQUIRE(result.getGain() == Catch::Approx(0.8));
 }
 
-TEST_CASE("lowpassToHighpass - basic test", "[lowpassToHighpass]")
+TEST_CASE("lowpassToHighpass - complex zeros and real poles", "[lowpassToHighpass]")
 {
     // >>> from scipy.signal import lp2hp_zpk
     // >>> z   = [ -2 + 3j ,  -0.5 - 0.8j ]
@@ -568,7 +573,7 @@ TEST_CASE("lowpassToHighpass - basic test", "[lowpassToHighpass]")
     REQUIRE(result.getGain() == Catch::Approx(8.5));
 }
 
-TEST_CASE("lowpassToBandpass - basic test", "[lowpassToBandpass]")
+TEST_CASE("lowpassToBandpass - conjugate pair doubles poles and zeros", "[lowpassToBandpass]")
 {
     // >>> from scipy.signal import lp2bp_zpk
     // >>> z   = [ 5 + 2j ,  5 - 2j ]
@@ -604,7 +609,7 @@ TEST_CASE("lowpassToBandpass - basic test", "[lowpassToBandpass]")
     REQUIRE(result.getGain() == Catch::Approx(0.8));
 }
 
-TEST_CASE("lowpassToBandstop - basic test", "[lowpassToBandstop]")
+TEST_CASE("lowpassToBandstop - all-pole filter adds notch zeros", "[lowpassToBandstop]")
 {
     // >>> from scipy.signal import lp2bs_zpk
     // >>> z   = [             ]
