@@ -25,6 +25,7 @@ void requireApproxEqual(const std::vector<double>& a, const std::vector<double>&
 {
     REQUIRE(a.size() == b.size());
     for (size_t i = 0; i < a.size(); i++) {
+        INFO("Index " << i << ": expected " << b[i] << ", got " << a[i]);
         REQUIRE(std::abs(a[i] - b[i]) < TOLERANCE);
     }
 }
@@ -32,8 +33,9 @@ void requireApproxEqual(const std::vector<double>& a, const std::vector<double>&
 void requireApproxEqual(const std::vector<std::complex<double>>& a, const std::vector<std::complex<double>>& b)
 {
     REQUIRE(a.size() == b.size());
-    for (auto& el : a) {
-        REQUIRE(contains(b, el));
+    for (size_t i = 0; i < a.size(); i++) {
+        INFO("Index " << i << ": " << a[i] << " not found in expected values");
+        REQUIRE(contains(b, a[i]));
     }
 }
 
